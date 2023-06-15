@@ -27,10 +27,11 @@ import plotly.express as px
 # Define constants and telescope parameters
 q_vec = [0.05, 0.1, 0.075, 0.2, 0.1, 0.075, 0.09, 0.15, 0.6, 0.9, 0.92, 0.9, 0.7, 0.4, 0.15]
 wav_vec = [200, 220, 230, 240, 260, 280, 300, 340, 410, 500, 580, 660, 800, 900, 1000]
+phase_vec1 = [0, 90, 180, 270, 360]
+phase_vec2 = [0, 180, 360]
 r = 50.8/2 # in cm
 rn = 8.7 # e-
-R = 34
-T = 0.002
+T = 0.0021
 D = 0.14 # e/pix/sec
 gain = 1.2 # e-/ADU
 lati = -42.43
@@ -43,30 +44,35 @@ i_eff = 743.9
 q_i = np.interp(i_eff, wav_vec, q_vec)
 i_zpt = 21.83
 i_zpt_er = 0.04
+i_sky_vec = [5,11,5] # e/pix/sec
 
 r_bp = 115.0
 r_eff = 612.2
 q_r = np.interp(r_eff, wav_vec, q_vec)
 r_zpt = 22.07
 r_zpt_er = 0.07
+r_sky_vec = [4,9,4] # e/pix/sec
 
 g_bp = 128.0
 g_eff = 463.9
 q_g = np.interp(g_eff, wav_vec, q_vec)
 g_zpt = 22.22
 g_zpt_er = 0.04
+g_sky_vec = [2,15,2] # e/pix/sec
 
 V_bp = 84.0
 V_eff = 544.8
 q_V = np.interp(V_eff, wav_vec, q_vec)
 V_zpt = 22.03
 V_zpt_er = 0.06
+V_sky_vec = [1,2,16.5,2,1] # e/pix/sec
 
 B_bp = 89.0
 B_eff = 436.1
 q_B = np.interp(B_eff, wav_vec, q_vec)
 B_zpt = 20.76
 B_zpt_er = 0.06
+B_sky_vec = [0.1, 0.4, 3.9, 0.4, 0.1] # e/pix/sec
 
 # Define the observatory
 bisdee_tier = EarthLocation(lat=lati*u.deg, lon=long*u.deg, height=hght*u.m)
@@ -285,85 +291,6 @@ def invert_SNR(snr, t, n_pix, R, D, rn):
     E = ((snr**2)+np.sqrt((snr**4)+(4*n_pix*sigma*(snr**2))))/(2*t)
     return E
 
-def plot_SNRvsTime(mag, fltr, n_pix):
-    """
-    Plot the signal-to-noise as a function of exposure time, given a target magnitude and filter
-    
-    params:
-    mag - The magnitude of the target
-    fltr - The filter to be used
-    n_pix - The number of pixels 
-    
-    return:
-    fig - The plotly figure
-    """
-    # Calculate the snr at times between 0.5 and 600 s
-    t_vec = np.arange(0.5, 10*60, 0.5)
-    f_density = calc_flux_density(mag, fltr)
-    E = calc_E(f_density, r, 0.002, fltr)
-    snr = calc_SNR(E, t_vec, n_pix, R, D, rn)    
-    
-    # Make the figure
-    fig = px.line(x=t_vec, y=snr, labels={'x': 'Exposure Time (s)', 'y': 'SNR'}, title='Signal-To-Noise vs Exp. Time for GHO 50 cm', template='plotly_dark')
-    fig.add_annotation(x=max(t_vec)/2, y=max(snr)/4,
-            text="Mag = "+str(mag), showarrow=False)
-    fig.add_annotation(x=max(t_vec)/2, y=max(snr)/2,
-            text="Filter = "+fltr, showarrow=False)
-
-    return fig
-
-def plot_MagLimvsTime(snr, fltr, n_pix):
-    """
-    Plot the magnitude limit as a function of exposure time, given a target SNR and filter
-    
-    params:
-    snr - The desired snr for the target
-    fltr - The filter to be used
-    
-    return:
-    fig - The plotly figure
-    """
-    # Calculate the limiting magnitude for times between 0.5 and 600 s
-    t_vec = np.arange(0.5, 10*60, 0.5)
-    E = invert_SNR(snr, t_vec, n_pix, R, D, rn)
-    F = calc_Fobj(E,r, 0.002, fltr)
-    mag_lim = calc_mag_limit(F, fltr)
-    
-    # Make the plot
-    fig = px.line(x=t_vec, y=mag_lim, labels={'x': 'Exposure Time (s)', 'y': 'Magnitude Limit'}, title='Magnitude Limit vs Exp. Time for GHO 50 cm', template='plotly_dark')
-    fig.add_annotation(x=max(t_vec)/2, y=max(mag_lim)/1.1,
-            text="SNR = "+str(snr), showarrow=False)
-    fig.add_annotation(x=max(t_vec)/2, y=max(mag_lim)/1.25,
-            text="Filter = "+fltr, showarrow=False)
-
-    return fig
-    
-def plot_SNRvsMag(exp_time, fltr, n_pix):
-    """
-    Plot the signal-to-noise of target magnitude, given a fixed exposure time and filter
-    
-    params:
-    exp_time - The exposure time (s)
-    fltr - The filter to be used
-    
-    return:
-    fig - The plotly figure
-    """
-    # Calculate the limiting magnitude as a function of SNR between 0.1 and 1000
-    snr_vec = np.arange(0.1, 1000, 0.1)
-    E_vec = invert_SNR(snr_vec, exp_time, n_pix, R, D, rn)
-    F_vec = calc_Fobj(E_vec,r, 0.002, fltr)
-    mag_vec = calc_mag_limit(F_vec, fltr)
-    
-    # Make the plot
-    fig = px.line(x=mag_vec, y=snr_vec, labels={'x': 'Magnitude', 'y': 'SNR'}, title='Signal-To-Noise vs Magnitude for GHO 50 cm', template='plotly_dark')
-    fig.add_annotation(x=max(mag_vec), y=max(snr_vec)/4,
-            text="Exp. Time = "+str(exp_time), showarrow=False)
-    fig.add_annotation(x=max(mag_vec), y=max(snr_vec)/2,
-            text="Filter = "+fltr, showarrow=False)
-
-    return fig
-    
 def moon_phase(dt):
     """
     Find the moon phase and percentage illuminated given a datetime, with timezone given.
@@ -402,6 +329,144 @@ def moon_phase(dt):
 
     return phase, percent
 
+def get_npix(seeing):
+    """
+    A function to retrieve the number of pixels given seeing selection
+    
+    params:
+    seeing - The seeing string 
+    
+    returns:
+    n_pix - The number of pixels for SNR calculation (2*IM_FWHM)
+    """
+    if seeing == 'Average (2")':
+        n_pix = 2*(2/0.8)
+        
+    elif seeing == 'Poor (2.5")':
+        n_pix = 2*(2.5/0.8)
+        
+    elif seeing == 'Good (1.5")':
+        n_pix = 2*(1.5/0.8)
+        
+    return n_pix
+
+def calc_sky(moon_phase, fltr):
+    """
+    Calculate an approximate sky brightness rate in e/s/pix 
+    
+    params:
+    moon_phase - The moon phase in deg
+    fltr - The desired filter
+    
+    return:
+    
+    The sky background rate in e/s/pix
+    """
+    if fltr == 'i':
+        R = np.interp(moon_phase, phase_vec2, i_sky_vec)
+    elif fltr == 'r':
+        R = np.interp(moon_phase, phase_vec2, r_sky_vec)
+    elif fltr == 'g':
+        R = np.interp(moon_phase, phase_vec2, g_sky_vec)
+    elif fltr == 'V':
+        R = np.interp(moon_phase, phase_vec1, V_sky_vec)
+    elif fltr == 'B':
+        R = np.interp(moon_phase, phase_vec1, B_sky_vec)
+    return R
+
+def plot_SNRvsTime(mag, fltr, n_pix, dt):
+    """
+    Plot the signal-to-noise as a function of exposure time, given a target magnitude and filter
+    
+    params:
+    mag - The magnitude of the target
+    fltr - The filter to be used
+    n_pix - The number of pixels 
+    dt - The datetime
+    
+    return:
+    fig - The plotly figure
+    """
+    phase = moon_phase(dt)[0]
+    R_sky = calc_sky(phase, fltr)
+    
+    # Calculate the snr at times between 0.5 and 600 s
+    t_vec = np.arange(0.5, 10*60, 0.5)
+    f_density = calc_flux_density(mag, fltr)
+    E = calc_E(f_density, r, 0.002, fltr)
+    snr = calc_SNR(E, t_vec, n_pix, R_sky, D, rn)    
+    
+    # Make the figure
+    fig = px.line(x=t_vec, y=snr, labels={'x': 'Exposure Time (s)', 'y': 'SNR'}, title='Signal-To-Noise vs Exp. Time for GHO 50 cm', template='plotly_dark')
+    fig.add_annotation(x=max(t_vec)/2, y=max(snr)/4,
+            text="Mag = "+str(mag), showarrow=False)
+    fig.add_annotation(x=max(t_vec)/2, y=max(snr)/2,
+            text="Filter = "+fltr, showarrow=False)
+
+    return fig
+
+def plot_MagLimvsTime(snr, fltr, n_pix, dt):
+    """
+    Plot the magnitude limit as a function of exposure time, given a target SNR and filter
+    
+    params:
+    snr - The desired snr for the target
+    fltr - The filter to be used
+    n_pix - The number of pixels
+    dt - The datetime
+    
+    return:
+    fig - The plotly figure
+    """
+    phase = moon_phase(dt)[0]
+    R_sky = calc_sky(phase, fltr)
+    
+    # Calculate the limiting magnitude for times between 0.5 and 600 s
+    t_vec = np.arange(0.5, 10*60, 0.5)
+    E = invert_SNR(snr, t_vec, n_pix, R_sky, D, rn)
+    F = calc_Fobj(E,r, 0.002, fltr)
+    mag_lim = calc_mag_limit(F, fltr)
+    
+    # Make the plot
+    fig = px.line(x=t_vec, y=mag_lim, labels={'x': 'Exposure Time (s)', 'y': 'Magnitude Limit'}, title='Magnitude Limit vs Exp. Time for GHO 50 cm', template='plotly_dark')
+    fig.add_annotation(x=max(t_vec)/2, y=max(mag_lim)/1.1,
+            text="SNR = "+str(snr), showarrow=False)
+    fig.add_annotation(x=max(t_vec)/2, y=max(mag_lim)/1.25,
+            text="Filter = "+fltr, showarrow=False)
+
+    return fig
+    
+def plot_SNRvsMag(exp_time, fltr, n_pix, dt):
+    """
+    Plot the signal-to-noise of target magnitude, given a fixed exposure time and filter
+    
+    params:
+    exp_time - The exposure time (s)
+    fltr - The filter to be used
+    n_pix - The number of pixels (from seeing)
+    dt - The datetime
+    
+    return:
+    fig - The plotly figure
+    """
+    phase = moon_phase(dt)[0]
+    R_sky = calc_sky(phase, fltr)
+    
+    # Calculate the limiting magnitude as a function of SNR between 0.1 and 1000
+    snr_vec = np.arange(0.1, 1000, 0.1)
+    E_vec = invert_SNR(snr_vec, exp_time, n_pix, R_sky, D, rn)
+    F_vec = calc_Fobj(E_vec,r, 0.002, fltr)
+    mag_vec = calc_mag_limit(F_vec, fltr)
+    
+    # Make the plot
+    fig = px.line(x=mag_vec, y=snr_vec, labels={'x': 'Magnitude', 'y': 'SNR'}, title='Signal-To-Noise vs Magnitude for GHO 50 cm', template='plotly_dark')
+    fig.add_annotation(x=max(mag_vec), y=max(snr_vec)/4,
+            text="Exp. Time = "+str(exp_time), showarrow=False)
+    fig.add_annotation(x=max(mag_vec), y=max(snr_vec)/2,
+            text="Filter = "+fltr, showarrow=False)
+
+    return fig
+
 def plot_airmass(RA, DEC, dt):
     """
     Plotting airmass for an object at a certain time
@@ -427,7 +492,7 @@ def plot_airmass(RA, DEC, dt):
     #obj_azimuth = GHO.altaz(time_utc+time_delta, target).az.value
     
     # Plot the figure 
-    fig = px.line(x=time_delta, y=obj_airmass, labels={'x': 'Hours from Midnight on {} (Tas)'.format(str(dt.date())), 'y': 'Airmass [Sec(z)]'}, title='Airmass for (RA,DEC) = ({},{}) at GHO'.format(RA, DEC), template='plotly_dark')
+    fig = px.line(x=time_delta, y=obj_airmass, labels={'x': 'Hours from Midnight on {} (Tas)'.format(str(dt.date())), 'y': 'Airmass [ &#935; ]'}, title='Airmass for (RA,DEC) = ({},{}) at GHO'.format(round(RA,3), round(DEC,3)), template='plotly_dark')
     fig.update_yaxes(range=[3, 1])
     fig.update_xaxes(range=[-6,6])
 
@@ -515,23 +580,3 @@ def get_jd(dt):
     jd = t.jd
     return jd
     
-def get_npix(seeing):
-    """
-    A function to retrieve the number of pixels given seeing selection
-    
-    params:
-    seeing - The seeing string 
-    
-    returns:
-    n_pix - The number of pixels for SNR calculation (2*IM_FWHM)
-    """
-    if seeing == 'Average (2")':
-        n_pix = 2*(2/0.8)
-        
-    elif seeing == 'Poor (2.5")':
-        n_pix = 2*(2.5/0.8)
-        
-    elif seeing == 'Good (1.5")':
-        n_pix = 2*(1.5/0.8)
-        
-    return n_pix

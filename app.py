@@ -31,15 +31,15 @@ filter_df = pd.DataFrame(columns = ['Filters'], data=['i', 'r', 'g', 'V', 'B'])
 seeing_df = pd.DataFrame(columns=['Seeing'], data = ['Good (1.5")', 'Average (2")', 'Poor (2.5")'])
 
 # Create a dataframe with this information
-night_dict = {'Quantity': ['Latitude (deg)', 'Longitude (deg)', 'Height (m)','Julian Day','RA (deg)', 'RA (hms)', 'DEC (deg)', 'DEC (dms)', 'l (deg)', 'b (deg)', 'Constellation', 'Ast. Twilight Ends', 'Ast. Morning Starts', 'Meridian Transit', 'Moon Phase (deg)', 'Perc. Illuminated', 'Moon Seperation (deg)'], 'Value': [-42.43,147.3,646, jd, 219.874,'14:39:29.72',-60.83,'-60:49:56.00', l, b, 'Centaurus', str(night_time.iso), str(morning_time.iso), str(meridian_transit.iso), m_phase,m_illum, str(moon_sep)]}
+night_dict = {'Quantity': ['Latitude (deg)', 'Longitude (deg)', 'Height (m)','Julian Day','RA (deg)', 'RA (hms)', 'DEC (deg)', 'DEC (dms)', 'l (deg)', 'b (deg)', 'Constellation', 'Ast. Twilight Ends', 'Ast. Morning Starts', 'Meridian Transit', 'Moon Phase (deg)', 'Perc. Illuminated', 'Moon Seperation (deg)'], 'Value': [-42.43,147.3, 646, jd, 219.874,'14:39:29.72',-60.83,'-60:49:56.00', round(l,3), round(b,3), 'Centaurus', str(night_time.iso), str(morning_time.iso), str(meridian_transit.iso), round(m_phase,3), round(m_illum,3), str(round(moon_sep,3))]}
 night_df = pd.DataFrame(data=night_dict)
 
 # Load the figures
 sky_chart = create_star_chart(str(default_date.date())+" 00:00", 12, 200, 219.874, -60.93, 0)
 airmass = plot_airmass(219.874, -60.83, default_date) # Alpha cent by default...
-snrvsexp = plot_SNRvsTime(14, 'r', get_npix('Average (2")'))
-magvstime = plot_MagLimvsTime(10, 'r', get_npix('Average (2")'))
-snrvsmag = plot_SNRvsMag(30, 'r', get_npix('Average (2")'))
+snrvsexp = plot_SNRvsTime(14, 'r', get_npix('Average (2")'), default_date)
+magvstime = plot_MagLimvsTime(10, 'r', get_npix('Average (2")'), default_date)
+snrvsmag = plot_SNRvsMag(30, 'r', get_npix('Average (2")'), default_date)
 
 # Start the web app and define the layout
 
@@ -96,7 +96,7 @@ def update_table(n_clicks, value1, value2, date_value):
     jd = get_jd(date_object)
     
     # Put into dataframe
-    night_dict = {'Quantity': ['Latitude (deg)', 'Longitude (deg)', 'Height (m)','Julian Day','RA (deg)', 'RA (hms)', 'DEC (deg)', 'DEC (dms)', 'l (deg)', 'b (deg)', 'Constellation', 'Ast. Twilight Ends', 'Ast. Morning Starts', 'Meridian Transit', 'Moon Phase (deg)', 'Perc. Illuminated', 'Moon Seperation (deg)'], 'Value': [-42.43,147.3,646, jd, ra_deg, str(ra_sex), dec_deg, str(dec_sex), l_new, b_new, constel, str(night_time_new.iso), str(morning_time_new.iso), str(meridian_transit.iso), m_phase, m_illum, str(moon_sep)]}
+    night_dict = {'Quantity': ['Latitude (deg)', 'Longitude (deg)', 'Height (m)','Julian Day','RA (deg)', 'RA (hms)', 'DEC (deg)', 'DEC (dms)', 'l (deg)', 'b (deg)', 'Constellation', 'Ast. Twilight Ends', 'Ast. Morning Starts', 'Meridian Transit', 'Moon Phase (deg)', 'Perc. Illuminated', 'Moon Seperation (deg)'], 'Value': [-42.43, 147.3, 646, jd, round(ra_deg, 3), str(ra_sex), round(dec_deg, 3), str(dec_sex), round(l_new,3), round(b_new,3), constel, str(night_time_new.iso), str(morning_time_new.iso), str(meridian_transit.iso), round(m_phase, 3), round(m_illum, 3), str(round(moon_sep, 3))]}
     night_df = pd.DataFrame(data=night_dict)
     
     return night_df.to_dict('records')
@@ -136,13 +136,15 @@ def update_skychart(n_clicks, value1, value2, date_value):
     Input(component_id='sve_mag', component_property='value'),
     Input(component_id = 'SeeingSelector', component_property = 'value'),
     State('RA', 'value'),
-    State('DEC', 'value'))
-def update_snrvsexp(value1, value2, value3, value4, value5):
+    State('DEC', 'value'),
+    State('ObsDate', 'date'))
+def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
+    date_object = datetime.fromisoformat(date_value)
     if value2 == '':
         raise PreventUpdate
     else:
         n_pix = get_npix(str(value3))
-        snrvsexp = plot_SNRvsTime(float(value2), value1, n_pix)
+        snrvsexp = plot_SNRvsTime(float(value2), value1, n_pix, date_object)
         
     return snrvsexp
 
@@ -152,13 +154,15 @@ def update_snrvsexp(value1, value2, value3, value4, value5):
     Input(component_id='mvt_snr', component_property='value'),
     Input(component_id = 'SeeingSelector', component_property = 'value'),
     State('RA', 'value'),
-    State('DEC', 'value'))
-def update_snrvsexp(value1, value2, value3, value4, value5):
+    State('DEC', 'value'),
+    State('ObsDate', 'date'))
+def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
+    date_object = datetime.fromisoformat(date_value)
     if value2 == '':
         raise PreventUpdate
     else:
         n_pix = get_npix(str(value3))
-        magvstime = plot_MagLimvsTime(float(value2), value1, n_pix)
+        magvstime = plot_MagLimvsTime(float(value2), value1, n_pix, date_object)
         
     return magvstime
 
@@ -168,13 +172,15 @@ def update_snrvsexp(value1, value2, value3, value4, value5):
     Input(component_id='svm_exp', component_property='value'),
     Input(component_id = 'SeeingSelector', component_property = 'value'),
     State('RA', 'value'),
-    State('DEC', 'value'))
-def update_snrvsexp(value1, value2, value3, value4, value5):
+    State('DEC', 'value'),
+    State('ObsDate', 'date'))
+def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
+    date_object = datetime.fromisoformat(date_value)
     if value2 == '':
         raise PreventUpdate
     else:
         n_pix = get_npix(str(value3))
-        snrvsmag = plot_SNRvsMag(float(value2), value1, n_pix)
+        snrvsmag = plot_SNRvsMag(float(value2), value1, n_pix, date_object)
         
     return snrvsmag
     

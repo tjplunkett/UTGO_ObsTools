@@ -87,7 +87,7 @@ def update_table(n_clicks, value1, value2, date_value):
     # Recalculate values for the tables with new inputs
     ra_deg, dec_deg = convert2Deg(value1, value2)
     ra_sex, dec_sex = convert2Sex(value1, value2)
-    l_new, b_new = convert2gal(value1, value2)
+    l_new, b_new = convert2gal(ra_deg, dec_deg)
     m_phase, m_illum = moon_phase(date_object)
     meridian_transit = calc_meridian_transit(ra_deg, dec_deg, date_object)
     moon_sep = calc_moon_sep(ra_deg, dec_deg, date_object)

@@ -12,6 +12,7 @@ Date: 10/06/23
 
 # Import necessary packages 
 from datetime import datetime
+import os
 from geopy import Nominatim
 from tzwhere import tzwhere
 from pytz import timezone, utc
@@ -25,9 +26,9 @@ from skyfield.projections import build_stereographic_projection
 from skyfield.constants import GM_SUN_Pitjeva_2005_km3_s2 as GM_SUN
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-
 import warnings
 warnings.simplefilter("ignore", UserWarning)
+plt.switch_backend('Agg') # Fix for Macs
 
 def load_data():
     """
@@ -163,15 +164,15 @@ def create_star_chart(when, chart_size, max_star_size, RA, DEC, n_clicks):
     
     # Check the n_clicks on web to allow for map to update (this is a hacky solution...)
     if n_clicks == 0:
-        filename = "assets\BisdeeTier_SkyMap_base.png" 
+        filename = "BisdeeTier_SkyMap_base.png" 
     elif n_clicks % 2 == 0:
-        filename = "assets\BisdeeTier_SkyMap_e.png" 
+        filename = "BisdeeTier_SkyMap_e.png" 
     else:
-        filename = "assets\BisdeeTier_SkyMap_o.png" 
+        filename = "BisdeeTier_SkyMap_o.png" 
     
     # Save the figure and return the file name
-    plt.savefig(filename, format='png')
-    return filename
+    plt.savefig(os.path.join('assets', filename) , format='png')
+    return os.path.join('assets', filename)
     
 # call the function above
 if __name__=='__main__':

@@ -156,7 +156,7 @@ def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
     State('RA', 'value'),
     State('DEC', 'value'),
     State('ObsDate', 'date'))
-def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
+def update_magvsexp(value1, value2, value3, value4, value5, date_value):
     date_object = datetime.fromisoformat(date_value)
     if value2 == '':
         raise PreventUpdate
@@ -174,7 +174,7 @@ def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
     State('RA', 'value'),
     State('DEC', 'value'),
     State('ObsDate', 'date'))
-def update_snrvsexp(value1, value2, value3, value4, value5, date_value):
+def update_snrvsmag(value1, value2, value3, value4, value5, date_value):
     date_object = datetime.fromisoformat(date_value)
     if value2 == '':
         raise PreventUpdate

@@ -1,6 +1,6 @@
 # Greenhill Observatory ObsTools
 
-The Greenhill Observatory (GHO) ‘ObsTools’ dashboard is a tool to aid in planning and executing
+The UTAS Greenhill Observatory (UTGO) ‘ObsTools’ dashboard is a tool to aid in planning and executing
 astronomical observations with the UTAS optical telescopes. It is written solely in Python, utilising the
 ‘Dash’ package to implement an interactive dashboard on your local machine. The main calculations
 use the Astropy, Astroplan and Skyfields packages. The dashboard contains a basic sky map, table

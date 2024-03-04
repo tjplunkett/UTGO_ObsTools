@@ -172,6 +172,7 @@ def create_star_chart(when, chart_size, max_star_size, RA, DEC, n_clicks):
     
     # Save the figure and return the file name
     plt.savefig(os.path.join('assets', filename) , format='png')
+    plt.close()
     return os.path.join('assets', filename)
     
 # call the function above

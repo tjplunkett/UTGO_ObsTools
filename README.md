@@ -33,7 +33,9 @@ Then, assuming that ‘pip’ installed into this environment during the process
 
 To run the dashboard, activate
 your conda environment, change to the ObsTool directory and type:
-python obstools.py
+
+### python obstools.py
+
 This will launch the dashboard on your local host. Go to a web browser and type the address given in
 the command line.
 
